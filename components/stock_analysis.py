@@ -633,7 +633,7 @@ def stock_analysis_app():
                 # 5. Unified hover + Range selector
 
                 fig.update_layout(
-                    height=2000,
+                    height=3500,
                     width=1500,
                     title=f'Momentum - {ticker}',
                     showlegend=False,
@@ -741,7 +741,7 @@ def stock_analysis_app():
 
                 # 5. Unified hover + Range selector
                 fig.update_layout(
-                    height=2000,
+                    height=3500,
                     width=1500,
                     title=f'Trend - {ticker}',
                     showlegend=False,
@@ -818,7 +818,7 @@ def stock_analysis_app():
 
                 # 5. Unified hover + Range selector
                 fig.update_layout(
-                    height=2000,
+                    height=3500,
                     width=1500,
                     title=f'Volume Analysis - {ticker}',
                     showlegend=False,
@@ -989,7 +989,7 @@ def stock_analysis_app():
 
                 # 5. Unified hover + Range selector
                 fig.update_layout(
-                    height=2000,
+                    height=3500,
                     width=1500,
                     title=f'Support & Resistance - {ticker}',
                     showlegend=False,
