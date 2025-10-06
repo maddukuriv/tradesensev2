@@ -9,4 +9,4 @@ python-dotenv
 bcrypt
 ta
 scikit-learn
-
+matplotlib
