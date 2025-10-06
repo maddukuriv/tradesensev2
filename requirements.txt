@@ -3,8 +3,9 @@ supabase
 pandas
 numpy
 plotly
-talib
+TA-Lib
 pandas_ta
 python-dotenv
 bcrypt
 ta
+

@@ -533,7 +533,7 @@ def stock_analysis_app():
                                     marker=dict(symbol="triangle-down", size=12, color="red"), name="Filtered SELL"))
             fig.add_trace(go.Scatter(x=df.index, y=df["ema50"], mode="lines", name="EMA50"))
             fig.add_trace(go.Scatter(x=df.index, y=df["ema200"], mode="lines", name="EMA200"))
-
+            fig.add_trace(go.Scatter(x=df.index, y=df["close"], mode="lines", name="Close"))
             fig.update_layout(
                 title=f"{ticker} - Candlestick Pattern Signals",
                 xaxis_title="Date", yaxis_title="Price",
@@ -558,7 +558,7 @@ def stock_analysis_app():
             
 
 
-            tab1, tab2, tab3 , tab4, tab5, tab6, tab7 = st.tabs(["Candlestick", "Momentum", "Trend","Volume","Volatility","Support & Resistance", "Forecast"])
+            tab1, tab2, tab3 , tab4, tab5, tab6, tab7, tab8 = st.tabs(["Candlestick", "Momentum", "Trend","Volume","Volatility","Support & Resistance", "Historical Trend","Forecast"])
             with tab1:
                 st.subheader("Candlestick Chart with Signals")
                 st.plotly_chart(fig, use_container_width=True)
@@ -667,10 +667,10 @@ def stock_analysis_app():
             with tab3:
                 st.subheader("Trend Indicators")
 
-                # 1. Create 5-row subplot with shared x-axis
+                # Create 9-row subplot with shared x-axis
                 fig = make_subplots(
                     rows=9, cols=1,
-                    shared_xaxes=True,  # Required for unified hover
+                    shared_xaxes=True,
                     vertical_spacing=0.05,
                     row_heights=[1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5],
                     subplot_titles=[
@@ -683,71 +683,76 @@ def stock_analysis_app():
                         "Bollinger",
                         "PSAR",
                         "GMMA"
-                        
-                        
-                        
+                    ],
+                    specs=[
+                        [{"secondary_y": True}],   # row 1 → MACD + Close with 2 y-axes
+                        [{}], [{}], [{}], [{}],
+                        [{}], [{}], [{}], [{}]
                     ]
                 )
 
+                # === MACD ===
+                colors = ['green' if val >= 0 else 'red' for val in df['MACD_hist']]
 
-                # Plot MACD
-                fig.add_trace(go.Scatter(x=df.index, y=df['MACD'], name='MACD', line=dict(color='green')), row=1, col=1)
-                fig.add_trace(go.Scatter(x=df.index, y=df['MACD_signal'], name='MACD Signal', line=dict(color='red')), row=1, col=1)
-                fig.add_trace(go.Bar(x=df.index, y=df['MACD_hist'], name='MACD Histogram', marker_color='rgba(255,0,0,2)'), row=1, col=1)
-                fig.add_trace(go.Scatter(x=df.index, y=[0] * len(df), name='MACD 0', line={'color': 'black', 'width': 0.5}), row=1, col=1)
+                # MACD & Signal → left axis
+                fig.add_trace(go.Scatter(x=df.index, y=df['MACD'], name='MACD',line=dict(color='green')),row=1, col=1, secondary_y=False)
+                fig.add_trace(go.Scatter(x=df.index, y=df['MACD_signal'], name='MACD Signal',line=dict(color='red')),row=1, col=1, secondary_y=False)
+                fig.add_trace(go.Bar(x=df.index, y=df['MACD_hist'], name='MACD Histogram',marker=dict(color=colors)),row=1, col=1, secondary_y=False)
+                fig.add_trace(go.Scatter(x=df.index, y=[0] * len(df), name='MACD 0',line={'color': 'black', 'width': 0.5}),row=1, col=1, secondary_y=False)
 
-                # Plot DMI
-                fig.add_trace(go.Scatter(x=df.index, y=df['Plus_DI'], name='Plus DI', line=dict(color='green')), row=2, col=1)
-                fig.add_trace(go.Scatter(x=df.index, y=df['Minus_DI'], name='Minus DI', line=dict(color='red')), row=2, col=1)
+                # Close → right axis
+                fig.add_trace(go.Scatter(x=df.index, y=df['close'], name='Close Price',line=dict(color='blue', width=2)),row=1, col=1, secondary_y=True)
+
+                # Label axes for MACD row
+                fig.update_yaxes(title_text="MACD", row=1, col=1, secondary_y=False)
+                fig.update_yaxes(title_text="Close Price", row=1, col=1, secondary_y=True)
+
+                # === DMI / ADX ===
+                fig.add_trace(go.Scatter(x=df.index, y=df['Plus_DI'], name='Plus DI',line=dict(color='green')), row=2, col=1)
+                fig.add_trace(go.Scatter(x=df.index, y=df['Minus_DI'], name='Minus DI',line=dict(color='red')), row=2, col=1)
                 fig.add_trace(go.Scatter(x=df.index, y=df['ADX'], name='ADX', line=dict(color='blue')), row=2, col=1)
 
+                # === SuperTrend ===
+                fig.add_trace(go.Scatter(x=df.index, y=df['SuperTrend'], name='SuperTrend',line=dict(color='red')), row=3, col=1)
+                fig.add_trace(go.Scatter(x=df.index, y=df['close'], name='Close',line={'color': 'blue', 'width': 2}), row=3, col=1)
 
-                # Plot SuperTrend
-                fig.add_trace(go.Scatter(x=df.index, y=df['SuperTrend'], name='SuperTrend', line=dict(color='red')), row=3, col=1)
-                fig.add_trace(go.Scatter(x=df.index, y=df['close'], name='Close', line={'color': 'blue', 'width': 2}), row=3, col=1)
-
-
-                # HMA
-                fig.add_trace(go.Scatter(x=df.index, y=df['HMA'], name='HMA', line={'color': 'red', 'width': 2}), row=4, col=1)
+                # === HMA ===
+                fig.add_trace(go.Scatter(x=df.index, y=df['HMA'], name='HMA',line={'color': 'red', 'width': 2}), row=4, col=1)
                 fig.add_trace(go.Scatter(x=df.index, y=df['close'], name='Close', line={'color': 'blue', 'width': 2}), row=4, col=1)
 
-                                
-                # Plot Ichimoku Cloud
+                # === Ichimoku Cloud ===
                 fig.add_trace(go.Scatter(x=df.index, y=df['Ichimoku_Senkou_Span_A'], name='Ichimoku A', fill='tonexty', fillcolor='rgba(0,128,0,0.3)'), row=5, col=1)
-                fig.add_trace(go.Scatter(x=df.index, y=df['Ichimoku_Senkou_Span_B'], name='Ichimoku B', fill='tonexty', fillcolor='rgba(255,0,0,0.8)'), row=5, col=1)
-                fig.add_trace(go.Scatter(x=df.index, y=df['close'], name='close',line={'color': 'blue', 'width': 2}), row=5, col=1)
-                                
-                # Aroon
+                fig.add_trace(go.Scatter(x=df.index, y=df['Ichimoku_Senkou_Span_B'],name='Ichimoku B', fill='tonexty', fillcolor='rgba(255,0,0,0.8)'), row=5, col=1)
+                fig.add_trace(go.Scatter(x=df.index, y=df['close'], name='Close', line={'color': 'blue', 'width': 2}), row=5, col=1)
+
+                # === Aroon ===
                 fig.add_trace(go.Scatter(x=df.index, y=df['Aroon_Up'], name='Aroon_Up', line=dict(color='green')), row=6, col=1)
                 fig.add_trace(go.Scatter(x=df.index, y=df['Aroon_Down'], name='Aroon_Down', line=dict(color='red')), row=6, col=1)
-                fig.add_trace(go.Scatter(x=df.index, y=[30] * len(df), name='Aroon 30', line={'color':'green', 'width': 2}), row=6, col=1)
-                fig.add_trace(go.Scatter(x=df.index, y=[70] * len(df), name='Aroon 70', line={'color':'red', 'width': 2}), row=6, col=1)
+                fig.add_trace(go.Scatter(x=df.index, y=[30] * len(df), name='Aroon 30', line={'color': 'green', 'width': 2}), row=6, col=1)
+                fig.add_trace(go.Scatter(x=df.index, y=[70] * len(df), name='Aroon 70', line={'color': 'red', 'width': 2}), row=6, col=1)
 
-                # Plot Bollinger Bands
+                # === Bollinger Bands ===
                 fig.add_trace(go.Scatter(x=df.index, y=df['BB_high'], name='BB High', line=dict(color='red')), row=7, col=1)
-                fig.add_trace(go.Scatter(x=df.index, y=df['BB_low'], name='BB Low', line=dict(color='green')), row=7, col=1)
+                fig.add_trace(go.Scatter(x=df.index, y=df['BB_low'], name='BB Low',  line=dict(color='green')), row=7, col=1)
                 fig.add_trace(go.Scatter(x=df.index, y=df['BB_Middle'], name='BB Middle', line={'dash': 'dot'}), row=7, col=1)
                 fig.add_trace(go.Scatter(x=df.index, y=df['close'], name='Close', line={'color': 'blue', 'width': 2}), row=7, col=1)
 
-                # Plot Parabolic SAR
+                # === Parabolic SAR ===
                 fig.add_trace(go.Scatter(x=df.index, y=df['Parabolic_SAR'], mode='markers', name='PSAR', marker=dict(color='red', size=3)), row=8, col=1)
-                fig.add_trace(go.Scatter(x=df.index, y=df['close'], name='close', line={'color': 'blue', 'width': 2}), row=8, col=1)
+                fig.add_trace(go.Scatter(x=df.index, y=df['close'], name='Close', line={'color': 'blue', 'width': 2}), row=8, col=1)
 
-                # Plot GMMA
+                # === GMMA ===
                 fig.add_trace(go.Scatter(x=df.index, y=df['GMMA_Short'], name='GMMA_Short', line=dict(color='green')), row=9, col=1)
                 fig.add_trace(go.Scatter(x=df.index, y=df['GMMA_Long'], name='GMMA_Long', line=dict(color='red')), row=9, col=1)
-                                
-                                
 
-                # 5. Unified hover + Range selector
+
+                # Layout settings
                 fig.update_layout(
                     height=3500,
                     width=1500,
                     title=f'Trend - {ticker}',
                     showlegend=False,
-
                     hovermode='x unified',
-
                     xaxis=dict(
                         rangeselector=dict(
                             buttons=[
@@ -760,17 +765,15 @@ def stock_analysis_app():
                                 dict(count=48, label="48m", step="month", stepmode="backward"),
                                 dict(step="all", label="All")
                             ],
-                            x=0,
-                            y=1.1,
-                            xanchor="left",
-                            yanchor="top"
+                            x=0, y=1.1, xanchor="left", yanchor="top"
                         ),
                         type='date',
                         rangeslider=dict(visible=False)
                     )
                 )
 
-                st.plotly_chart(fig, use_container_width=True)                         
+                st.plotly_chart(fig, use_container_width=True)
+                        
 
 
             with tab4:
@@ -1021,6 +1024,9 @@ def stock_analysis_app():
                 st.plotly_chart(fig, use_container_width=True)  
 
             with tab7:
+                st.subheader("Historical Trend Analysis")
+
+            with tab8:
                 st.subheader("Forecasting with ML")
 
 
