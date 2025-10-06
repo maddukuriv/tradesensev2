@@ -16,7 +16,6 @@ from ta.volatility import AverageTrueRange
 
 import numpy as np
 import pandas as pd
-import yfinance as yf
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import TimeSeriesSplit, GridSearchCV
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
