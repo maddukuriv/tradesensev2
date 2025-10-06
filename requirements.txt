@@ -8,5 +8,5 @@ pandas_ta
 python-dotenv
 bcrypt
 ta
-
+scikit-learn
 
