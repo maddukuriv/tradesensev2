@@ -1,3 +1,2 @@
 build-essential
-libta-lib0
-libta-lib0-dev
+
